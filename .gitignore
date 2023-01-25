@@ -5,3 +5,5 @@ node_modules/
 artifacts/
 cache/
 resource_errors.json
+.DS_Store
+audit_notes.org
