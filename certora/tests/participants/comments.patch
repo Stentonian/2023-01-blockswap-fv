@@ -1,0 +1,111 @@
+diff --git a/certora/munged/syndicate/Syndicate.sol b/certora/munged/syndicate/Syndicate.sol
+index 07f69c8..c9a0b20 100644
+--- a/certora/munged/syndicate/Syndicate.sol
++++ b/certora/munged/syndicate/Syndicate.sol
+@@ -142,6 +142,7 @@ contract Syndicate is ISyndicateInit, Initializable, Ownable, ReentrancyGuard, S
+         );
+     }
+ 
++    // STENT checked
+     /// @notice Allows the contract owner to append to the list of knots that are part of the syndicate
+     /// @param _newBLSPublicKeyBeingRegistered List of BLS public keys being added to the syndicate
+     function registerKnotsToSyndicate(
+@@ -152,12 +153,14 @@ contract Syndicate is ISyndicateInit, Initializable, Ownable, ReentrancyGuard, S
+         _registerKnotsToSyndicate(_newBLSPublicKeyBeingRegistered);
+     }
+ 
++    // STENT checked
+     /// @notice Make knot shares of a registered list of BLS public keys inactive - the action cannot be undone and no further ETH accrued
+     function deRegisterKnots(blsKey[] memory _blsPublicKeys) public onlyOwner {// MUNGED internal => public
+         updateAccruedETHPerShares();
+         _deRegisterKnots(_blsPublicKeys);
+     }
+ 
++    // STENT checked
+     /// @notice Allows the contract owner to append to the list of priority sETH stakers
+     /// @param _priorityStakers List of staker addresses eligible for sETH staking
+     function addPriorityStakers(address[] memory _priorityStakers) public onlyOwner { // MUNGED internal => public
+@@ -172,18 +175,23 @@ contract Syndicate is ISyndicateInit, Initializable, Ownable, ReentrancyGuard, S
+         priorityStakingEndBlock = _endBlock;
+     }
+ 
++    // STENT checked
+     /// @notice Update accrued ETH per SLOT share without distributing ETH as users of the syndicate individually pull funds
+     function updateAccruedETHPerShares() public {
+         // Ensure there are registered KNOTs. Syndicates are deployed with at least 1 registered but this can fall to zero.
+         // Fee recipient should be re-assigned in the event that happens as any further ETH can be collected by owner
+         if (numberOfRegisteredKnots > 0) {
+             // All time, total ETH that was earned per slot type (free floating or collateralized)
++
++            // STENT (this.balance + totalClaimed) / 2
+             uint256 totalEthPerSlotType = calculateETHForFreeFloatingOrCollateralizedHolders();
+ 
+             // Process free floating if there are staked shares
+             uint256 freeFloatingUnprocessed;
+             if (totalFreeFloatingShares > 0) {
++                // STENT (this.balance + totalClaimed) / 2 - lastSeenETHPerFreeFloating
+                 freeFloatingUnprocessed = getUnprocessedETHForAllFreeFloatingSlot();
++                // STENT (freeFloatingUnprocessed * PRECISION) / totalFreeFloatingShares
+                 accumulatedETHPerFreeFloatingShare += _calculateNewAccumulatedETHPerFreeFloatingShare(freeFloatingUnprocessed);
+                 lastSeenETHPerFreeFloating = totalEthPerSlotType;
+             }
+@@ -196,6 +204,7 @@ contract Syndicate is ISyndicateInit, Initializable, Ownable, ReentrancyGuard, S
+         }
+     }
+ 
++    // STENT checked
+     /// @notice Stake up to 4 collateralized SLOT worth of sETH per KNOT to get a portion of syndicate rewards
+     /// @param _blsPubKeys List of BLS public keys for KNOTs registered with the syndicate
+     /// @param _sETHAmounts Per BLS public key, the total amount of sETH that will be staked (up to 4 collateralized SLOT per KNOT)
+@@ -381,6 +390,7 @@ contract Syndicate is ISyndicateInit, Initializable, Ownable, ReentrancyGuard, S
+     /// @notice Using `highestSeenBalance`, this is the amount that is separately allocated to either free floating or collateralized SLOT holders
+     function calculateETHForFreeFloatingOrCollateralizedHolders() public view returns (uint256) {
+         // Get total amount of ETH that can be drawn down by all SLOT holders associated with a knot
++        // STENT address(this).balance + totalClaimed;
+         uint256 ethPerKnot = totalETHReceived();
+ 
+         // Get the amount of ETH eligible for free floating sETH or collateralized SLOT stakers
+@@ -477,11 +487,13 @@ contract Syndicate is ISyndicateInit, Initializable, Ownable, ReentrancyGuard, S
+ 
+     /// @notice Amount of ETH per free floating share that hasn't yet been allocated to each share
+     function getUnprocessedETHForAllFreeFloatingSlot() public view returns (uint256) {
++        // STENT (address(this).balance + totalClaimed) / 2 - lastSeenETHPerFreeFloating
+         return calculateETHForFreeFloatingOrCollateralizedHolders() - lastSeenETHPerFreeFloating;
+     }
+ 
+     /// @notice Amount of ETH per collateralized share that hasn't yet been allocated to each share
+     function getUnprocessedETHForAllCollateralizedSlot() public view returns (uint256) {
++        // STENT ((this.balance + totalClaimed) / 2 - lastSeenETHPerCollateralizedSlotPerKnot) / numberOfRegisteredKnots
+         return ((calculateETHForFreeFloatingOrCollateralizedHolders() - lastSeenETHPerCollateralizedSlotPerKnot) / numberOfRegisteredKnots);
+     }
+ 
+@@ -494,6 +506,7 @@ contract Syndicate is ISyndicateInit, Initializable, Ownable, ReentrancyGuard, S
+ 
+     /// @notice New accumulated ETH per collateralized share per knot that hasn't yet been applied
+     function calculateNewAccumulatedETHPerCollateralizedSharePerKnot() public view returns (uint256) {
++        // STENT ((this.balance + totalClaimed) / 2 - lastSeenETHPerCollateralizedSlotPerKnot) / numberOfRegisteredKnots
+         uint256 ethSinceLastUpdate = getUnprocessedETHForAllCollateralizedSlot();
+         return accumulatedETHPerCollateralizedSlotPerKnot + ethSinceLastUpdate;
+     }
+@@ -573,12 +586,14 @@ contract Syndicate is ISyndicateInit, Initializable, Ownable, ReentrancyGuard, S
+         }
+     }
+ 
++    // STENT function is not used
+     function _calculateCollateralizedETHOwedPerKnot() internal view returns (uint256) {
+         uint256 collateralizedSLOTShareOfETH = calculateETHForFreeFloatingOrCollateralizedHolders();
+         uint256 collateralizedSLOTShareOfETHPerKnot = (collateralizedSLOTShareOfETH / numberOfRegisteredKnots);
+         return collateralizedSLOTShareOfETHPerKnot;
+     }
+ 
++    // STENT function is not used
+     /// @dev Business logic for calculating per collateralized share how much ETH from 1559 rewards is owed
+     function _calculateNewAccumulatedETHPerCollateralizedShare(uint256 _ethSinceLastUpdate) internal view returns (uint256) {
+         return (_ethSinceLastUpdate * PRECISION) / (numberOfRegisteredKnots * 4 ether);
+@@ -720,4 +735,4 @@ contract Syndicate is ISyndicateInit, Initializable, Ownable, ReentrancyGuard, S
+ 
+         _transferETH(_recipient, totalToTransfer);
+     }
+-}
+\ No newline at end of file
++}
