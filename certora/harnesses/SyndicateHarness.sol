@@ -132,5 +132,11 @@ contract SyndicateHarness is Syndicate {
     function getStakeHouseUniverse() internal view override returns (IStakeHouseUniverse stakeHouseUniverse) {
         return IStakeHouseUniverse(universe);
     }
+
+    function getSETHTokenBalance(blsKey _blsPubKey, address user) public view returns (uint256) {
+        (address stakeHouse,,,,,) = getStakeHouseUniverse().stakeHouseKnotInfo(blsKey.unwrap(_blsPubKey));
+        IERC20 sETH = IERC20(getSlotRegistry().stakeHouseShareTokens(stakeHouse));
+        return sETH.balanceOf(user);
+    }
 }
 

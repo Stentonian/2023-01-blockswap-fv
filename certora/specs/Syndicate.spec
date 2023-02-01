@@ -1,4 +1,7 @@
 using MocksETH as sETHToken
+using MocksETHBad as sETHTokenBad
+using MockStakeHouseUniverse as stakeHouseUniverse
+using MockStakeHouseRegistry as stakeHouseRegistry
 
 methods {
     //// Regular methods
@@ -20,6 +23,8 @@ methods {
   totalUserCollateralisedSLOTBalanceForKnot(address, address, bytes32) returns (uint256) => DISPATCHER(true)
     // sETH
     sETHToken.balanceOf(address) returns (uint256) envfree
+    // sETH bad
+    sETHTokenBad.balanceOf(address) returns (uint256) envfree
     // ERC20
     name()                                returns (string)  => DISPATCHER(true)
     symbol()                              returns (string)  => DISPATCHER(true)
@@ -58,6 +63,7 @@ methods {
     addPriorityStakers(address,address)
     batchUpdateCollateralizedSlotOwnersAccruedETH(bytes32)
     batchUpdateCollateralizedSlotOwnersAccruedETH(bytes32,bytes32)
+    getSETHTokenBalance(bytes32, address) returns (uint256) envfree
 }
 
 /// We defined additional functions to get around the complexity of defining dynamic arrays in cvl. We filter them in
@@ -214,11 +220,11 @@ rule sETHBalanceIncreasesAfterUnstake() {
 
     require e.msg.sender != currentContract;
 
-    uint256 balanceBefore = sETHToken.balanceOf(staker);
+    uint256 balanceBefore = getSETHTokenBalance(blsKey, staker);
     unstake(e, staker, staker, blsKey, sETHAmount);
-    uint256 balanceAfter = sETHToken.balanceOf(staker);
+    uint256 balanceAfter = getSETHTokenBalance(blsKey, staker);
 
-    assert(balanceAfter - balanceBefore == sETHAmount);
+    assert balanceAfter - balanceBefore == sETHAmount;
 }
 
 rule viewFunctionMatchesActual() {
