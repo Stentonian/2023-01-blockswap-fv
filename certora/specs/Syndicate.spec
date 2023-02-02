@@ -227,7 +227,10 @@ rule sETHBalanceIncreasesAfterUnstake() {
     assert balanceAfter - balanceBefore == sETHAmount;
 }
 
-rule viewFunctionMatchesActual() {
+/**
+ * This rule should break for bug5.patch
+ */
+rule viewFunctionPreCalculationMatchesActualCalculation() {
     uint256 newAccumulatedETHPerCollateralizedSharePerKnot = calculateNewAccumulatedETHPerCollateralizedSharePerKnot();
 
     env e;
