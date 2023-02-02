@@ -138,5 +138,9 @@ contract SyndicateHarness is Syndicate {
         IERC20 sETH = IERC20(getSlotRegistry().stakeHouseShareTokens(stakeHouse));
         return sETH.balanceOf(user);
     }
+
+    function calculateNewAccumulatedETHPerFreeFloatingShare(uint256 _ethSinceLastUpdate) public view returns (uint256) {
+        return _calculateNewAccumulatedETHPerFreeFloatingShare(_ethSinceLastUpdate);
+    }
 }
 
